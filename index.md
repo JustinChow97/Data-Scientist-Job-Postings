@@ -1,37 +1,161 @@
-## Welcome to GitHub Pages
 
-You can use the [editor on GitHub](https://github.com/JustinChow97/Data-Scientist-Job-Postings/edit/gh-pages/index.md) to maintain and preview the content for your website in Markdown files.
+<!-- Source: https://www.d3-graph-gallery.com/graph/lollipop_button_data_csv.html -->
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
 
-### Markdown
+<!-- Code from d3-graph-gallery.com -->
+<!DOCTYPE html>
+<meta charset="utf-8">
 
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
+<!-- Load d3.js -->
+<script src="https://d3js.org/d3.v4.js"></script>
 
-```markdown
-Syntax highlighted code block
+<!-- Add 2 buttons -->
+<button onclick="update('var1')">Applied Scientist</button>
+<button onclick="update('var2')">Data Analyst</button>
+<button onclick="update('var3')">Data Engineer</button>
+<button onclick="update('var4')">Data Scientist</button>
+<button onclick="update('var5')">ML Engineer</button>
+<button onclick="update('var6')">ML Scientist</button>
 
-# Header 1
-## Header 2
-### Header 3
+<!--<defs>-->
+<!--    <pattern id="amazon" height="100%" width="100%" patternContentUnits="objectBoundingBox">-->
+<!--        <image height="1" width="1" preserveAspectRatio="none" xmlns:xlink="http://www.w3.org/1999/xlink"-->
+<!--               xlink:href="amazon.png"></image>-->
+<!--    </pattern>-->
+<!--</defs>-->
 
-- Bulleted
-- List
 
-1. Numbered
-2. List
+<!-- Create a div where the graph will take place -->
+<div id="my_dataviz"></div>
 
-**Bold** and _Italic_ and `Code` text
 
-[Link](url) and ![Image](src)
-```
+<script>
 
-For more details see [GitHub Flavored Markdown](https://guides.github.com/features/mastering-markdown/).
 
-### Jekyll Themes
 
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/JustinChow97/Data-Scientist-Job-Postings/settings). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
 
-### Support or Contact
+// set the dimensions and margins of the graph
+var margin = {top: 30, right: 30, bottom: 70, left: 60},
+    width = 460 - margin.left - margin.right,
+    height = 400 - margin.top - margin.bottom;
 
-Having trouble with Pages? Check out our [documentation](https://docs.github.com/categories/github-pages-basics/) or [contact support](https://support.github.com/contact) and we’ll help you sort it out.
+// append the svg object to the body of the page
+var svg = d3.select("#my_dataviz")
+  .append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform",
+          "translate(" + margin.left + "," + margin.top + ")");
+
+// Initialize the X axis
+var x = d3.scaleBand()
+  .range([ 0, width ])
+  .padding(1);
+var xAxis = svg.append("g")
+  .attr("transform", "translate(0," + height + ")")
+
+// Initialize the Y axis
+var y = d3.scaleLinear()
+  .range([ height, 0]);
+var yAxis = svg.append("g")
+  .attr("class", "myYaxis")
+
+
+var defs = svg.append("defs");
+
+// defs.append("pattern")
+//     .attr("id", "Amazon")
+//     .attr("height", "100%")
+//     .attr("width", "100%")
+//     .attr("patternContentUnits", "objectBoundingBox")
+//     .append("image")
+//     .attr("height", "1")
+//     .attr("width", "1")
+//     .attr("preserveAspectRatio", "none")
+//     .attr("xmlns", "http://www.w3.org/1999/xLink")
+//     .attr("xlink:href", "amazon.png")
+
+
+
+// A function that create / update the plot for a given variable:
+function update(selectedVar) {
+
+  // Parse the Data
+  d3.csv("CompanyData.csv", function(data) {
+
+    // X axis
+    x.domain(data.map(function(d) { return d.group; }))
+    xAxis.transition().duration(1000).call(d3.axisBottom(x))
+
+    // Add Y axis
+    y.domain([0, d3.max(data, function(d) { return +d[selectedVar] }) ]);
+    yAxis.transition().duration(1000).call(d3.axisLeft(y));
+
+    // variable u: map data to existing circle
+    var j = svg.selectAll(".myLine")
+      .data(data)
+    // update lines
+    j
+      .enter()
+      .append("line")
+      .attr("class", "myLine")
+      .merge(j)
+      .transition()
+      .duration(1000)
+        .attr("x1", function(d) { console.log(x(d.group)) ; return x(d.group); })
+        .attr("x2", function(d) { return x(d.group); })
+        .attr("y1", y(0))
+        .attr("y2", function(d) { return y(d[selectedVar]); })
+        .attr("stroke", "grey")
+
+  // Source: https://www.youtube.com/watch?v=FUJjNG4zkWY&t=612s&ab_channel=JonathanSoma
+  defs.selectAll(".company-pattern").data(data)
+      .enter().append("pattern")
+      .attr("class", "company-pattern")
+      .attr("id", function (d) {
+          return d.group})
+      .attr("height", "100%")
+      .attr("width", "100%")
+      .attr("patternContentUnits", "objectBoundingBox")
+      .append("image")
+      .attr("height", "1")
+      .attr("width", "1")
+      .attr("preserveAspectRatio", "none")
+      .attr("xmlns", "http://www.w3.org/1999/xLink")
+      .attr("xlink:href", function(d) {
+          console.log(d.image_path);
+          return (d.image_path)});
+
+
+    // variable u: map data to existing circle
+    var u = svg.selectAll("circle")
+      .data(data)
+    // update bars
+    u
+      .enter()
+      .append("circle")
+      .merge(u)
+      .transition()
+      .duration(1000)
+        .attr("cx", function(d) {
+            //console.log ("url(#" +d.group+")");
+            return x(d.group); })
+        .attr("cy", function(d) { return y(d[selectedVar]); })
+        .attr("r", 20)
+        .attr("fill", function(d) {
+            //console.log ("url(#" +d.group+")");
+            return ("url(#" +d.group+")"); });
+
+
+  })
+
+
+
+
+}
+
+// Initialize plot
+update('var1')
+
+</script>
